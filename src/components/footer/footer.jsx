@@ -1,6 +1,6 @@
-import { Component } from 'react';
-import React from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+
 import './footer.css';
 import TaskFilter from './task-filter/task-filter';
 
