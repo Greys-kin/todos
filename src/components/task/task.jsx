@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { formatDistanceToNow } from 'date-fns';
 
 import EditForm from './edit-form';
+import TaskTimer from './task-timer';
 
 import './task.css';
 
@@ -22,7 +23,7 @@ export default class Task extends Component {
   }
 
   render() {
-    const { label, onDeleted, toggleDone, created, showEditForm, editItem, id } = this.props;
+    const { label, onDeleted, toggleDone, created, showEditForm, editItem, id, timeLeft, done } = this.props;
 
     const createdTime = formatDistanceToNow(created, {
       addSuffix: true,
@@ -35,7 +36,8 @@ export default class Task extends Component {
           <div className="view">
             <input className="toggle" type="checkbox" onClick={toggleDone} />
             <label>
-              <span className="description">{label}</span>
+              <span className="title">{label}</span>
+              <TaskTimer timeLeftProp={timeLeft} toggleDone={toggleDone} done={done} />
               <span className="created">{createdTime}</span>
             </label>
             <button className="icon icon-edit" onClick={showEditForm}></button>

@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { parse } from 'date-fns';
 
 import './app.css';
 import NewTaskForm from '../new-task-form';
@@ -13,6 +14,14 @@ export default class App extends Component {
     filter: 'all',
   };
 
+  componentDidMount() {
+    this.interval = setInterval(this.updateTimers, 1000);
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.interval);
+  }
+
   clearCompleted = () => {
     this.setState(({ todos }) => {
       const newArray = todos.filter((item) => !item.done);
@@ -20,8 +29,8 @@ export default class App extends Component {
     });
   };
 
-  addTodo = (text) => {
-    const newTodo = this.createTodo(text);
+  addTodo = (text, min, sec) => {
+    const newTodo = this.createTodo(text, min, sec);
     this.setState((prevState) => ({
       todos: [...prevState.todos, newTodo],
     }));
@@ -81,7 +90,8 @@ export default class App extends Component {
     }
   }
 
-  createTodo(label) {
+  createTodo(label, min = 0, sec = 0) {
+    const parseTime = parse(`${min}:${sec}`, 'mm:ss', new Date());
     return {
       label,
       important: false,
@@ -89,6 +99,7 @@ export default class App extends Component {
       id: this.maxId++,
       created: new Date(),
       isEditing: false,
+      timeLeft: parseTime,
     };
   }
 
