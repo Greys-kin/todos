@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import { parse } from 'date-fns';
 
 import './app.css';
 import NewTaskForm from '../new-task-form';
@@ -14,13 +13,56 @@ export default class App extends Component {
     filter: 'all',
   };
 
-  componentDidMount() {
-    this.interval = setInterval(this.updateTimers, 1000);
-  }
-
   componentWillUnmount() {
     clearInterval(this.interval);
   }
+
+  startTimer = (id) => {
+    clearInterval(this.interval);
+    this.setState(({ todos }) => {
+      const updatedTodos = todos.map((todo) => {
+        if (todo.id === id) {
+          return {
+            ...todo,
+            isPlay: true,
+          };
+        }
+        return todo;
+      });
+
+      return { todos: updatedTodos };
+    });
+    this.interval = setInterval(() => {
+      this.setState(({ todos }) => {
+        const updatedTodos = todos.map((todo) => {
+          if (todo.id === id && todo.timeLeft > 0) {
+            return {
+              ...todo,
+              timeLeft: todo.timeLeft - 1000,
+            };
+          }
+          return todo;
+        });
+        return { todos: updatedTodos };
+      });
+    }, 1000);
+  };
+
+  stopTimer = (id) => {
+    clearInterval(this.interval);
+    this.setState(({ todos }) => {
+      const updatedTodos = todos.map((todo) => {
+        if (todo.id === id) {
+          return {
+            ...todo,
+            isPlay: false,
+          };
+        }
+        return todo;
+      });
+      return { todos: updatedTodos };
+    });
+  };
 
   clearCompleted = () => {
     this.setState(({ todos }) => {
@@ -91,7 +133,7 @@ export default class App extends Component {
   }
 
   createTodo(label, min = 0, sec = 0) {
-    const parseTime = parse(`${min}:${sec}`, 'mm:ss', new Date());
+    const totalMilliseconds = (min * 60 + sec) * 1000;
     return {
       label,
       important: false,
@@ -99,7 +141,8 @@ export default class App extends Component {
       id: this.maxId++,
       created: new Date(),
       isEditing: false,
-      timeLeft: parseTime,
+      timeLeft: totalMilliseconds,
+      isPlay: false,
     };
   }
 
@@ -120,6 +163,9 @@ export default class App extends Component {
             toggleDone={this.onToggleDone}
             showEditForm={this.showEditForm}
             editItem={this.editItem}
+            startTimer={this.startTimer}
+            stopTimer={this.stopTimer}
+            isPlay={todos.isPlay}
           />
           <Footer
             active={activeCount}

@@ -23,7 +23,21 @@ export default class Task extends Component {
   }
 
   render() {
-    const { label, onDeleted, toggleDone, created, showEditForm, editItem, id, timeLeft, done } = this.props;
+    const {
+      label,
+      onDeleted,
+      toggleDone,
+      created,
+      showEditForm,
+      editItem,
+      id,
+      timeLeft,
+      done,
+      todos,
+      startTimer,
+      stopTimer,
+      isPlay,
+    } = this.props;
 
     const createdTime = formatDistanceToNow(created, {
       addSuffix: true,
@@ -37,7 +51,15 @@ export default class Task extends Component {
             <input className="toggle" type="checkbox" onClick={toggleDone} />
             <label>
               <span className="title">{label}</span>
-              <TaskTimer timeLeftProp={timeLeft} toggleDone={toggleDone} done={done} />
+              <TaskTimer
+                timeLeftProp={timeLeft}
+                toggleDone={toggleDone}
+                done={done}
+                todos={todos}
+                startTimer={() => startTimer(id)}
+                stopTimer={() => stopTimer(id)}
+                isPlay={isPlay}
+              />
               <span className="created">{createdTime}</span>
             </label>
             <button className="icon icon-edit" onClick={showEditForm}></button>
@@ -59,7 +81,7 @@ Task.defaultProps = {
 };
 
 Task.propTypes = {
-  dateCreated: PropTypes.instanceOf(Date),
+  dateCreated: PropTypes.number,
   onDeleted: PropTypes.func,
   toggleDone: PropTypes.func,
   editItem: PropTypes.func,

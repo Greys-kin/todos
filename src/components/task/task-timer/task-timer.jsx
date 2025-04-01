@@ -3,31 +3,31 @@ import './task-timer.css';
 import { format } from 'date-fns';
 import PropTypes from 'prop-types';
 
-const TaskTimer = function TaskTimer({ timeLeftProp, toggleDone, done }) {
+const TaskTimer = function TaskTimer({ timeLeftProp, toggleDone, done, startTimer, stopTimer, isPlay }) {
   const [timeLeft, setTimeLeft] = useState(timeLeftProp);
-  const [isPlay, setIsPlay] = useState(false);
-  const [activeInterval, setActiveInterval] = useState('');
+  const [activeInterval, setActiveInterval] = useState(null);
 
-  const stopTimer = () => {
-    clearInterval(activeInterval);
-    setIsPlay(false);
-  };
+  useEffect(() => {
+    setTimeLeft(timeLeftProp);
+  }, [timeLeftProp]);
 
-  const startTimer = () => {
-    const interval = setInterval(() => {
-      setTimeLeft((prevTime) => {
-        if (prevTime <= 1000) {
-          clearInterval(interval);
-          setIsPlay(false);
-          toggleDone();
-          return 0;
-        }
-        return prevTime - 1000;
-      });
-    }, 1000);
-    setActiveInterval(interval);
-    setIsPlay(true);
-  };
+  useEffect(() => {
+    if (isPlay) {
+      const interval = setInterval(() => {
+        setTimeLeft((prevTime) => {
+          if (prevTime <= 1000) {
+            clearInterval(interval);
+            stopTimer();
+            toggleDone();
+            return 0;
+          }
+          return prevTime - 1000;
+        });
+      }, 1000);
+      setActiveInterval(interval);
+    }
+    return () => clearInterval(activeInterval);
+  }, [toggleDone, timeLeft]);
 
   const onPlayClick = () => {
     if (!isPlay) {
@@ -35,20 +35,14 @@ const TaskTimer = function TaskTimer({ timeLeftProp, toggleDone, done }) {
     }
   };
 
-  useEffect(() => {
-    if (format(timeLeft, 'mm:ss') === '00:01') {
-      setTimeout(() => {
-        clearInterval(activeInterval);
-        setIsPlay(false);
-        toggleDone();
-      }, 1000);
+  const onPauseClick = () => {
+    if (isPlay) {
+      stopTimer();
     }
-  }, [activeInterval, toggleDone, timeLeft]);
-
-  useEffect(() => () => clearInterval(activeInterval), [activeInterval]);
+  };
 
   const playButton = <button className="icon icon-play" type="button" aria-label="play" onClick={onPlayClick} />;
-  const pauseButton = <button className="icon icon-pause" type="button" aria-label="pause" onClick={stopTimer} />;
+  const pauseButton = <button className="icon icon-pause" type="button" aria-label="pause" onClick={onPauseClick} />;
   const formatTimeLeft = format(timeLeft, 'mm:ss');
 
   const button = isPlay ? pauseButton : playButton;
@@ -63,7 +57,7 @@ const TaskTimer = function TaskTimer({ timeLeftProp, toggleDone, done }) {
 
 TaskTimer.propTypes = {
   toggleDone: PropTypes.func.isRequired,
-  timeLeftProp: PropTypes.instanceOf(Date).isRequired,
+  timeLeftProp: PropTypes.number.isRequired,
   done: PropTypes.bool.isRequired,
 };
 

@@ -40,7 +40,7 @@ export default class NewTaskForm extends Component {
     if (!min) {
       min = 0;
     }
-    if (sec >= 60) {
+    if (sec >= 60 || min >= 60) {
       return;
     }
 
@@ -73,7 +73,8 @@ export default class NewTaskForm extends Component {
           className="new-todo-form__timer"
           placeholder="Min"
           value={min}
-          min="0"
+          min={0}
+          max={59}
         />
         <input
           type="number"

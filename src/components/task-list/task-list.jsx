@@ -8,7 +8,7 @@ export default class TaskList extends Component {
   render() {
     const { todos, onDeleted, toggleDone, showEditForm, editItem } = this.props;
     const elements = todos.map((item) => {
-      const { id, ...itemProps } = item;
+      const { id, timeLeft, isPlay, ...itemProps } = item;
       return (
         <Task
           {...itemProps}
@@ -16,8 +16,12 @@ export default class TaskList extends Component {
           onDeleted={() => onDeleted(id)}
           showEditForm={() => showEditForm(id)}
           editItem={editItem}
+          startTimer={this.props.startTimer}
+          stopTimer={this.props.stopTimer}
           key={id}
           id={id}
+          timeLeft={timeLeft}
+          isPlay={isPlay}
         />
       );
     });
