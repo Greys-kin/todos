@@ -1,125 +1,97 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 import './app.css';
 import NewTaskForm from '../new-task-form';
 import TaskList from '../task-list';
 import Footer from '../footer';
 
-export default class App extends Component {
-  maxId = 100;
-
-  state = {
-    todos: [this.createTodo('Completed task'), this.createTodo('Editing task'), this.createTodo('Active task')],
-    filter: 'all',
+const App = () => {
+  const maxId = useRef(100);
+  const interval = useRef(null);
+  const createTodo = (label, min = 0, sec = 0) => {
+    const totalMilliseconds = (min * 60 + sec) * 1000;
+    return {
+      label,
+      important: false,
+      done: false,
+      id: maxId.current++,
+      created: new Date(),
+      isEditing: false,
+      timeLeft: totalMilliseconds,
+      isPlay: false,
+    };
   };
+  const [todos, setTodos] = useState([
+    createTodo('Completed task'),
+    createTodo('Editing task'),
+    createTodo('Active task'),
+  ]);
+  const [filter, setFilter] = useState('all');
 
-  componentWillUnmount() {
-    clearInterval(this.interval);
-  }
+  useEffect(() => {
+    return () => clearInterval(interval.current);
+  }, []);
 
-  startTimer = (id) => {
-    clearInterval(this.interval);
-    this.setState(({ todos }) => {
-      const updatedTodos = todos.map((todo) => {
-        if (todo.id === id) {
-          return {
-            ...todo,
-            isPlay: true,
-          };
-        }
-        return todo;
-      });
+  const startTimer = (id) => {
+    clearInterval(interval.current);
+    setTodos((prevTodos) => prevTodos.map((todo) => (todo.id === id ? { ...todo, isPlay: true } : todo)));
 
-      return { todos: updatedTodos };
-    });
-    this.interval = setInterval(() => {
-      this.setState(({ todos }) => {
-        const updatedTodos = todos.map((todo) => {
-          if (todo.id === id && todo.timeLeft > 0) {
-            return {
-              ...todo,
-              timeLeft: todo.timeLeft - 1000,
-            };
-          }
-          return todo;
-        });
-        return { todos: updatedTodos };
-      });
+    interval.current = setInterval(() => {
+      setTodos((prevTodos) =>
+        prevTodos.map((todo) =>
+          todo.id === id && todo.timeLeft > 0 ? { ...todo, timeLeft: todo.timeLeft - 1000 } : todo
+        )
+      );
     }, 1000);
   };
 
-  stopTimer = (id) => {
-    clearInterval(this.interval);
-    this.setState(({ todos }) => {
-      const updatedTodos = todos.map((todo) => {
-        if (todo.id === id) {
-          return {
-            ...todo,
-            isPlay: false,
-          };
-        }
-        return todo;
-      });
-      return { todos: updatedTodos };
-    });
+  const stopTimer = (id) => {
+    clearInterval(interval.current);
+    setTodos((prevTodos) => prevTodos.map((todo) => (todo.id === id ? { ...todo, isPlay: false } : todo)));
   };
 
-  clearCompleted = () => {
-    this.setState(({ todos }) => {
-      const newArray = todos.filter((item) => !item.done);
-      return { todos: newArray };
-    });
+  const clearCompleted = () => {
+    setTodos((prevTodos) => prevTodos.filter((item) => !item.done));
   };
 
-  addTodo = (text, min, sec) => {
-    const newTodo = this.createTodo(text, min, sec);
-    this.setState((prevState) => ({
-      todos: [...prevState.todos, newTodo],
-    }));
+  const addTodo = (text, min = 0, sec = 0) => {
+    const newTodo = createTodo(text, min, sec);
+    setTodos((prevTodos) => [...prevTodos, newTodo]);
   };
 
-  propToggle = (arr, propName, id) => {
+  const propToggle = (arr, propName, id) => {
     const idx = arr.findIndex((el) => el.id === id);
-
     const oldItem = arr[idx];
     const newItem = { ...oldItem, [propName]: !oldItem[propName] };
-
     return [...arr.slice(0, idx), newItem, ...arr.slice(idx + 1)];
   };
 
-  onToggleDone = (id) => {
-    this.setState(({ todos }) => ({
-      todos: this.propToggle(todos, 'done', id),
-    }));
+  const onToggleDone = (id) => {
+    setTodos((prevTodos) => propToggle(prevTodos, 'done', id));
   };
 
-  showEditForm = (id) => {
-    this.setState(({ todos }) => ({
-      todos: this.propToggle(todos, 'isEditing', id),
-    }));
+  const showEditForm = (id) => {
+    setTodos((prevTodos) => propToggle(prevTodos, 'isEditing', id));
   };
 
-  deleteTodo = (id) => {
-    this.setState((prevState) => ({
-      todos: prevState.todos.filter((todo) => todo.id !== id),
-    }));
+  const deleteTodo = (id) => {
+    setTodos((prevTodos) => prevTodos.filter((todo) => todo.id !== id));
   };
 
-  onFilterChange = (filter) => {
-    this.setState({ filter });
+  const onFilterChange = (filter) => {
+    setFilter(filter);
   };
 
-  editItem = (newName, id) => {
-    this.setState(({ todos }) => {
-      const idx = todos.findIndex((el) => el.id === id);
-      const oldItem = todos[idx];
+  const editItem = (newName, id) => {
+    setTodos((prevTodos) => {
+      const idx = prevTodos.findIndex((el) => el.id === id);
+      const oldItem = prevTodos[idx];
       const newItem = { ...oldItem, label: newName, isEditing: !oldItem.isEditing };
-
-      return { todos: [...todos.slice(0, idx), newItem, ...todos.slice(idx + 1)] };
+      return [...prevTodos.slice(0, idx), newItem, ...prevTodos.slice(idx + 1)];
     });
   };
 
-  filter(items, filter) {
+  const filterItems = (items, filter) => {
     switch (filter) {
       case 'all':
         return items;
@@ -130,51 +102,32 @@ export default class App extends Component {
       default:
         return items;
     }
-  }
+  };
 
-  createTodo(label, min = 0, sec = 0) {
-    const totalMilliseconds = (min * 60 + sec) * 1000;
-    return {
-      label,
-      important: false,
-      done: false,
-      id: this.maxId++,
-      created: new Date(),
-      isEditing: false,
-      timeLeft: totalMilliseconds,
-      isPlay: false,
-    };
-  }
+  const visibleItems = filterItems(todos, filter);
+  const activeCount = todos.filter((el) => !el.done).length;
 
-  render() {
-    const { filter, todos } = this.state;
-    const activeCount = todos.filter((el) => !el.done).length;
-    const visibleItems = this.filter(todos, filter);
-    return (
-      <section className="todoapp">
-        <main className="main">
-          <header className="header">
-            <h1>todos</h1>
-            <NewTaskForm addTask={this.addTodo} />
-          </header>
-          <TaskList
-            todos={visibleItems}
-            onDeleted={this.deleteTodo}
-            toggleDone={this.onToggleDone}
-            showEditForm={this.showEditForm}
-            editItem={this.editItem}
-            startTimer={this.startTimer}
-            stopTimer={this.stopTimer}
-            isPlay={todos.isPlay}
-          />
-          <Footer
-            active={activeCount}
-            filter={filter}
-            onFilterChange={this.onFilterChange}
-            clearCompleted={this.clearCompleted}
-          />
-        </main>
-      </section>
-    );
-  }
-}
+  return (
+    <section className="todoapp">
+      <main className="main">
+        <header className="header">
+          <h1>todos</h1>
+          <NewTaskForm addTask={addTodo} />
+        </header>
+        <TaskList
+          todos={visibleItems}
+          onDeleted={deleteTodo}
+          toggleDone={onToggleDone}
+          showEditForm={showEditForm}
+          editItem={editItem}
+          startTimer={startTimer}
+          stopTimer={stopTimer}
+          isPlay={todos.isPlay}
+        />
+        <Footer active={activeCount} filter={filter} onFilterChange={onFilterChange} clearCompleted={clearCompleted} />
+      </main>
+    </section>
+  );
+};
+
+export default App;
